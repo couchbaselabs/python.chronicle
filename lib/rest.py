@@ -69,7 +69,7 @@ class Rest(object):
 
     def http_session_delete(self, api, headers=None, session=None, timeout=120):
         try:
-            response = session.get(api, headers=headers, timeout=timeout)
+            response = session.delete(api, headers=headers, timeout=timeout)
             status = response.status_code
             content = response.content
             if status in [200, 201, 202, 204]:

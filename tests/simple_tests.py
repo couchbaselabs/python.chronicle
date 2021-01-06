@@ -111,7 +111,7 @@ class SimpleTests(BaseTestCase):
         for the key. Verify that the new node returns the updated-value
         """
         bool_val, content, response = self.util.provision_node(self.primary_node + ":8080")
-        key = "key5"
+        key = "key"
         value = "1"
         bool_val, content, response = self.util.add_key_value(self.primary_node + ":8080",
                                                               key=key, value=value)
@@ -126,6 +126,51 @@ class SimpleTests(BaseTestCase):
         content = self.util.get_value(self.primary_node + ":8081", key=key)
         self.log.info(content)
         self.assertEqual(str(content), updated_value)
+
+    def test_delete_key_one_node(self):
+        """
+        Create a single node. Add a key-value pair. Delete the key.
+        Verify reading the key throws exception
+        """
+        bool_val, content, response = self.util.provision_node(self.primary_node + ":8080")
+        key = "key"
+        value = "1"
+        bool_val, content, response = self.util.add_key_value(self.primary_node + ":8080",
+                                                              key=key, value=value)
+        bool_val, content, response = self.util.delete_key(self.primary_node + ":8080",
+                                                           key=key)
+        try:
+            content = self.util.get_value(self.primary_node + ":8081", key=key)
+        except Exception as e:
+            self.log.info(str(e) + "as expected")
+        else:
+            self.fail("Get value of a deleted key worked")
+
+    def test_delete_key_multiple_nodes(self):
+        """
+        Create a 5 node cluster
+        Delete a key on one node and verify it is deleted on all other nodes
+        """
+        bool_val, content, response = self.util.provision_node(self.primary_node + ":8080")
+
+        nodes_to_add = '["chronicle_1@127.0.0.1", "chronicle_2@127.0.0.1", ' \
+                       '"chronicle_3@127.0.0.1", "chronicle_4@127.0.0.1"]'
+        bool_val, content, response = self.util.add_node(self.primary_node + ":8080",
+                                                         nodes_to_add=nodes_to_add)
+        key = "key"
+        value = "1"
+        bool_val, content, response = self.util.add_key_value(self.primary_node + ":8084",
+                                                              key=key, value=value)
+        bool_val, content, response = self.util.delete_key(self.primary_node + ":8084",
+                                                           key=key)
+        for port in [":8080", ":8081", ":8082", ":8083"]:
+            try:
+                content = self.util.get_value(self.primary_node + port, key=key, consistency_level="quorum")
+            except Exception as e:
+                self.log.info(str(e) + " as expected")
+            else:
+                self.fail("Get value of a deleted key worked on node {0}"
+                          .format(self.primary_node + port))
 
     def test_local_reads_after_removing_leader(self):
         """
@@ -225,7 +270,3 @@ class SimpleTests(BaseTestCase):
             values.append(str(content))
         self.log.info(values)
         self.assertEqual(values_added, values)
-
-
-
-

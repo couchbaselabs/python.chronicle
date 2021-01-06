@@ -73,16 +73,17 @@ class Util(object):
             self.log.error("adding key:value {0}:{1} to node {2} failed".format(key, value, node))
         return bool_val, content, response
 
-    def get_value(self, node, key, consistency_level="local"):
+    def get_value(self, node, key, consistency_level="local", raise_exception=True):
         """
         Return value associated with key depending on consistency_level
+        Raises exception if key not found and raise_exception=True
         """
         api = "http://" + node + "/kv/" + str(key) + "?consistency=" + consistency_level
         headers = {"Content-Type": "application/json"}
         with requests.Session() as session:
             bool_val, content, response = self.rest.http_session_get(api, headers=headers,
                                                                      session=session)
-        if not bool_val:
+        if not bool_val and raise_exception:
             raise Exception("getting value of key: {0} from node: {1} failed: {2}".format(key, node, content))
         content = json.loads(content)
         return content['value']
@@ -105,5 +106,4 @@ class Util(object):
                                                                         session=session)
         if not bool_val:
             self.log.error("deleting key {0} from node {1} failed".format(key, node))
-        content = json.loads(content)
-        return content['value']
+        return bool_val, content, response
