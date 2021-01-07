@@ -97,11 +97,11 @@ class SimpleTests(BaseTestCase):
         value = "1"
         bool_val, content, response = self.util.add_key_value(self.primary_node + ":8080",
                                                               key=key, value=value)
-        updated_value = 3
+        updated_value = "3"
         bool_val, content, response = self.util.update_value(self.primary_node + ":8080",
                                                              key=key, value=updated_value)
 
-        content = self.util.get_value(self.primary_node + ":8081", key=key)
+        content = self.util.get_value(self.primary_node + ":8080", key=key)
         self.log.info(content)
         self.assertEqual(str(content), updated_value)
 
