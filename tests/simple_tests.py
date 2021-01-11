@@ -1,4 +1,4 @@
-from basetestcase import BaseTestCase
+from tests.basetestcase import BaseTestCase
 from lib.util import Util
 
 import unittest

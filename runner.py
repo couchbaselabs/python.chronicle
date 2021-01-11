@@ -12,11 +12,11 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, "ht:in:u:p:")
     except getopt.GetoptError:
-        print 'python runner.py -t module -i source_dir_chronicle -n node'
+        print('python runner.py -t module -i source_dir_chronicle -n node')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print 'python runner.py -t module -i source_dir_chronicle -n node -u username -p password'
+            print('python runner.py -t module -i source_dir_chronicle -n node -u username -p password')
             sys.exit()
         elif opt in "-t":
             module = arg

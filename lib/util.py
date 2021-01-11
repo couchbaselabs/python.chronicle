@@ -1,4 +1,4 @@
-from rest import Rest
+from lib.rest import Rest
 
 import json
 import requests
