@@ -1,8 +1,11 @@
+import paramiko
+
 from lib.rest import Rest
 
 import json
 import requests
 import logging
+import spec.test_input as t
 
 
 class Util(object):
@@ -11,10 +14,19 @@ class Util(object):
         self.primary_node = primary_node
         self.rest = Rest()
         self.log = logging.getLogger(__name__)
+        self.input = t.test_input
+        self.username = self.input["username"]
+        self.password = self.input["password"]
+
         logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s',
                             datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
         logging.getLogger("paramiko").setLevel(logging.WARNING)
         logging.getLogger("requests").setLevel(logging.WARNING)
+
+        self.ssh = paramiko.SSHClient()
+        self.ssh.load_system_host_keys()
+        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.ssh.connect(primary_node, username=self.username, password=self.password)
 
     def provision_node(self, provision_node):
         """
@@ -107,3 +119,40 @@ class Util(object):
         if not bool_val:
             self.log.error("deleting key {0} from node {1} failed".format(key, node))
         return bool_val, content, response
+
+    def stop_node(self, port):
+        """
+        SIGSTOP chronicle on node referenced by port
+        :param port: 8080 for first node, 8081 for second node etc.
+        """
+        self.log.info("Stopping node on port {0}".format(port))
+        cmd = "lsof -t -i:" + port + " | xargs kill -19"
+        ssh_stdin, ssh_stdout, ssh_stderr = self.ssh.exec_command(cmd)
+        exit_status = ssh_stdout.channel.recv_exit_status()
+        if not (exit_status == 0):
+            self.log.error("Failed to stop node")
+
+    def start_node(self, port):
+        """
+        SIGSTCONT chronicle on node referenced by port
+        :param port: 8080 for first node, 8081 for second node etc.
+        """
+        self.log.info("Starting node on port {0}".format(port))
+        cmd = "lsof -t -i:" + port + " | xargs kill -18"
+        ssh_stdin, ssh_stdout, ssh_stderr = self.ssh.exec_command(cmd)
+        exit_status = ssh_stdout.channel.recv_exit_status()
+        if not (exit_status == 0):
+            self.log.error("failed to start node")
+
+    def kill_node(self, port):
+        """
+        SIGSTKILL chronicle on node referenced by port
+        :param port: 8080 for first node, 8081 for second node etc.
+        """
+        self.log.info("Killing node on port {0}".format(port))
+        cmd = "lsof -t -i:" + port + " | xargs kill -9"
+        ssh_stdin, ssh_stdout, ssh_stderr = self.ssh.exec_command(cmd)
+        exit_status = ssh_stdout.channel.recv_exit_status()
+        if not (exit_status == 0):
+            self.log.error("failed to kill node")
+

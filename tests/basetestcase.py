@@ -28,6 +28,22 @@ class BaseTestCase(unittest.TestCase):
         self.start_cluster()
         self.log.info("BaseTestCase setup finished")
 
+    def install_libraries(self, node):
+        """
+        Install any commands/libraries on the node that are
+        used in the code
+        eg: lsof command
+        """
+        ssh = paramiko.SSHClient()
+        ssh.load_system_host_keys()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(node, username=self.username, password=self.password)
+        cmd = "yum install -y lsof"
+        ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
+        exit_status = ssh_stdout.channel.recv_exit_status()
+        if not (exit_status == 0):
+            self.fail("lsof command failed")
+
     def copy_chronicle(self, node):
         """
         Copy compiled chronicle repo to a different place per test
@@ -72,6 +88,7 @@ class BaseTestCase(unittest.TestCase):
         """
         Start a cluster of 5 nodes
         """
+        self.install_libraries(self.input["node"])
         self.copy_chronicle(self.input["node"])
         self.setup_cluster(self.input["node"], 5)
 

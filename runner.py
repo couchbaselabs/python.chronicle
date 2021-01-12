@@ -1,5 +1,6 @@
 from tests.simple_tests import SimpleTests
 from tests.volume import Volume
+from tests.failure_tests import FailureTests
 
 import getopt
 import sys
