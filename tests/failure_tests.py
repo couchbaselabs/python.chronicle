@@ -30,7 +30,7 @@ class FailureTests(BaseTestCase):
                                                               key=key, value=value)
         self.util.stop_node("8081")
         try:
-            content = self.util.get_value(self.primary_node + ":8081", key=key)
+            _ = self.util.get_value(self.primary_node + ":8081", key=key)
         except Exception as e:
             self.log.info("Read on stopped node failed as expected: {0}".format(e))
         else:
@@ -55,14 +55,14 @@ class FailureTests(BaseTestCase):
         self.util.start_node("8081")
 
         content = self.util.get_value(self.primary_node + ":8081", key=key)
-        self.assertTrue(str(content), value)
+        self.assertEqual(str(content), value)
 
         second_key = "key2"
         second_value = "2"
-        bool_val, content, response = self.util.add_key_value(self.primary_node + ":8080",
+        bool_val, content, response = self.util.add_key_value(self.primary_node + ":8081",
                                                               key=second_key, value=second_value)
         content = self.util.get_value(self.primary_node + ":8081", key=second_key)
-        self.assertTrue(str(content), second_value)
+        self.assertEqual(str(content), second_value)
 
     def test_quorum_reads_cruds_before_after_reviving_random_node(self):
         """
@@ -89,22 +89,22 @@ class FailureTests(BaseTestCase):
                                                                  key=key, value=value)
         for i in range(50, 100):
             key = "key" + str(i)
-            value = str(i+1)
+            value = str(i + 1)
             bool_val, content, response = self.util.add_key_value(self.primary_node + ":8080",
                                                                   key=key, value=value)
         self.util.start_node("8081")
         for i in range(100):
             key = "key" + str(i)
-            expected_value = str(i+1)
+            expected_value = str(i + 1)
             content = self.util.get_value(self.primary_node + ":8081", key=key, consistency_level="quorum")
-            self.assertTrue(str(content), expected_value)
+            self.assertEqual(str(content), expected_value)
 
     def test_leader_reads_cruds_before_after_reviving_random_node(self):
         """
         Start a 3 node cluster. Do:
         Add key/value pairs before stopping random node
         Add some more keys and update some values after stopping node
-        Verify history(quorum reads) after reviving node, from revived node
+        Verify history(leader reads) after reviving node, from revived node
         """
         bool_val, content, response = self.util.provision_node(self.primary_node + ":8080")
 
@@ -124,12 +124,86 @@ class FailureTests(BaseTestCase):
                                                                  key=key, value=value)
         for i in range(50, 100):
             key = "key" + str(i)
-            value = str(i+1)
+            value = str(i + 1)
             bool_val, content, response = self.util.add_key_value(self.primary_node + ":8080",
                                                                   key=key, value=value)
         self.util.start_node("8081")
         for i in range(100):
             key = "key" + str(i)
-            expected_value = str(i+1)
+            expected_value = str(i + 1)
             content = self.util.get_value(self.primary_node + ":8081", key=key, consistency_level="leader")
-            self.assertTrue(str(content), expected_value)
+            self.assertEqual(str(content), expected_value)
+
+    def test_quorum_reads_cruds_before_after_reviving_leader_node(self):
+        """
+        Start a 3 node cluster. Do:
+        Add key/value pairs before stopping leader node
+        Add some more keys and update some values after stopping leader node
+        Verify history(quorum reads) after reviving node, from revived node
+        """
+        bool_val, content, response = self.util.provision_node(self.primary_node + ":8080")
+
+        nodes_to_add = '["chronicle_1@127.0.0.1", "chronicle_2@127.0.0.1"]'
+        bool_val, content, response = self.util.add_node(self.primary_node + ":8080",
+                                                         nodes_to_add=nodes_to_add)
+        for i in range(50):
+            key = "key" + str(i)
+            value = str(i)
+            bool_val, content, response = self.util.add_key_value(self.primary_node + ":8080",
+                                                                  key=key, value=value)
+        self.util.stop_node("8080")
+        time.sleep(20)  # ToDo: Why does it not work without sleep? Time for Replicated log sync maybe?
+        for i in range(50):
+            key = "key" + str(i)
+            value = str(i + 1)
+            bool_val, content, response = self.util.update_value(self.primary_node + ":8081",
+                                                                 key=key, value=value)
+        for i in range(50, 100):
+            key = "key" + str(i)
+            value = str(i + 1)
+            bool_val, content, response = self.util.add_key_value(self.primary_node + ":8081",
+                                                                  key=key, value=value)
+        self.util.start_node("8080")
+        for i in range(100):
+            key = "key" + str(i)
+            expected_value = str(i + 1)
+            content = self.util.get_value(self.primary_node + ":8080", key=key, consistency_level="quorum")
+            self.assertEqual(str(content), expected_value)
+
+    def test_leader_reads_cruds_before_after_reviving_leader_node(self):
+        """
+        Start a 3 node cluster. Do:
+        Add key/value pairs before stopping leader node
+        Add some more keys and update some values after stopping leader node
+        Verify history(leader reads) after reviving node, from revived node
+        """
+        bool_val, content, response = self.util.provision_node(self.primary_node + ":8080")
+
+        nodes_to_add = '["chronicle_1@127.0.0.1", "chronicle_2@127.0.0.1"]'
+        bool_val, content, response = self.util.add_node(self.primary_node + ":8080",
+                                                         nodes_to_add=nodes_to_add)
+        for i in range(50):
+            key = "key" + str(i)
+            value = str(i)
+            bool_val, content, response = self.util.add_key_value(self.primary_node + ":8080",
+                                                                  key=key, value=value)
+        self.util.stop_node("8080")
+        time.sleep(20)  # ToDo: Why does it not work without sleep? Time for Replicated log sync maybe?
+        for i in range(50):
+            key = "key" + str(i)
+            value = str(i + 1)
+            bool_val, content, response = self.util.update_value(self.primary_node + ":8081",
+                                                                 key=key, value=value)
+            self.log.info(bool_val)
+        for i in range(50, 100):
+            key = "key" + str(i)
+            value = str(i + 1)
+            bool_val, content, response = self.util.add_key_value(self.primary_node + ":8081",
+                                                                  key=key, value=value)
+        self.util.start_node("8080")
+        for i in range(100):
+            key = "key" + str(i)
+            expected_value = str(i + 1)
+            content = self.util.get_value(self.primary_node + ":8080", key=key, consistency_level="leader")
+            self.log.info(str(content))
+            self.assertEqual(str(content), expected_value)
