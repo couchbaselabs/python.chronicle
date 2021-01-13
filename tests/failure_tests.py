@@ -194,7 +194,6 @@ class FailureTests(BaseTestCase):
             value = str(i + 1)
             bool_val, content, response = self.util.update_value(self.primary_node + ":8081",
                                                                  key=key, value=value)
-            self.log.info(bool_val)
         for i in range(50, 100):
             key = "key" + str(i)
             value = str(i + 1)
