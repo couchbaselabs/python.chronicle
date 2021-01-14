@@ -204,5 +204,4 @@ class FailureTests(BaseTestCase):
             key = "key" + str(i)
             expected_value = str(i + 1)
             content = self.util.get_value(self.primary_node + ":8080", key=key, consistency_level="leader")
-            self.log.info(str(content))
             self.assertEqual(str(content), expected_value)
