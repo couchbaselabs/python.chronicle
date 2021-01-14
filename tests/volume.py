@@ -11,14 +11,26 @@ class Volume(BaseTestCase):
         self.primary_node = self.input["node"]
         self.util = Util(self.primary_node)
         self.data_load_flag = False
-        self.number_of_cycles = 1  # ToDO: scale it up later
-        self.number_of_kv_pairs = 10000  # ToDO: scale it up later
+        self.number_of_cycles = 100  # ToDO: scale it up later
+        self.number_of_kv_pairs = 100000  # ToDO: scale it up later
 
     def tearDown(self):
         super(Volume, self).tearDown()
 
     def assert_rebalance(self, bool):
         self.assertTrue(bool, "Rebalance failed")
+
+    def wipe_removed_nodes(self, removed_nodes):
+        """
+        Wipes the removed nodes
+        :param removed_nodes: eg:'["chronicle_1@127.0.0.1", "chronicle_2@127.0.0.1"]'
+        """
+        removed_nodes_list = removed_nodes.strip('][').split(', ')
+        for removed_node in removed_nodes_list:
+            number = removed_node[11]
+            port = 8080 + int(number)
+            bool_val, content, response = self.util.wipe_node(self.primary_node + ":" + str(port))
+            self.assertTrue(bool_val, "could not wipe node")
 
     def infinite_data_load(self):
         """
@@ -65,7 +77,6 @@ class Volume(BaseTestCase):
         Step 3: Add multiple nodes
         Step 4: Remove multiple nodes (all except init nodes)
         """
-        # ToDO: Cleanup after finding out a way to add back the removed node
 
         bool_val, content, response = self.util.provision_node(self.primary_node + ":8080")
         self.data_load_flag = True
@@ -86,29 +97,33 @@ class Volume(BaseTestCase):
 
             print("#############################################################################")
             self.log.info("Step 2: Removing a single node")
-            nodes_to_remove = '"chronicle_1@127.0.0.1"'
+            nodes_to_remove = '["chronicle_1@127.0.0.1"]'
             bool_val, content, response = self.util.remove_node(self.primary_node + ":8080",
                                                                 nodes_to_remove=nodes_to_remove)
             self.assert_rebalance(bool_val)
             bool_val, content, response = self.util.get_config(self.primary_node + ":8080")
             self.log.info("config of the cluster: {0} {1} {2}".format(bool_val, content, response))
+            self.wipe_removed_nodes(nodes_to_remove)
+            self.log.info("config of the cluster: {0} {1} {2}".format(bool_val, content, response))
 
-            # print("#############################################################################")
-            # self.log.info("Step 3: Adding multiple nodes")
-            # #nodes_to_add = '["chronicle_1@127.0.0.1", "chronicle_2@127.0.0.1","chronicle_3@127.0.0.1", "chronicle_4@127.0.0.1"]'
-            # bool_val, content, response = self.util.add_node(self.primary_node + ":8080",
-            #                                                  nodes_to_add=nodes_to_add)
-            # bool_val, content, response = self.util.get_config(self.primary_node + ":8080")
-            # self.log.info("config of the cluster: {0} {1} {2}".format(bool_val, content, response))
-            #
-            # print("#############################################################################")
-            # self.log.info("Step 4: Removing multiple nodes")
-            # nodes_to_remove = '"chronicle_1@127.0.0.1"'
-            # #nodes_to_remove =  '["chronicle_1@127.0.0.1", "chronicle_2@127.0.0.1","chronicle_3@127.0.0.1", "chronicle_4@127.0.0.1"]'
-            # bool_val, content, response = self.util.remove_node(self.primary_node + ":8080",
-            #                                                     nodes_to_remove=nodes_to_remove)
-            # bool_val, content, response = self.util.get_config(self.primary_node + ":8080")
-            # self.log.info("config of the cluster: {0} {1} {2}".format(bool_val, content, response))
+            print("#############################################################################")
+            self.log.info("Step 3: Adding multiple nodes")
+            nodes_to_add = '["chronicle_1@127.0.0.1", "chronicle_2@127.0.0.1", "chronicle_3@127.0.0.1", "chronicle_4@127.0.0.1"]'
+            bool_val, content, response = self.util.add_node(self.primary_node + ":8080",
+                                                             nodes_to_add=nodes_to_add)
+            self.assert_rebalance(bool_val)
+            bool_val, content, response = self.util.get_config(self.primary_node + ":8080")
+            self.log.info("config of the cluster: {0} {1} {2}".format(bool_val, content, response))
 
-            self.data_load_flag = False
-            data_load_thread.join()
+            print("#############################################################################")
+            self.log.info("Step 4: Removing multiple nodes")
+            nodes_to_remove = '["chronicle_1@127.0.0.1", "chronicle_2@127.0.0.1", "chronicle_3@127.0.0.1", "chronicle_4@127.0.0.1"]'
+            bool_val, content, response = self.util.remove_node(self.primary_node + ":8080",
+                                                                nodes_to_remove=nodes_to_remove)
+            self.assert_rebalance(bool_val)
+            bool_val, content, response = self.util.get_config(self.primary_node + ":8080")
+            self.log.info("config of the cluster: {0} {1} {2}".format(bool_val, content, response))
+            self.wipe_removed_nodes(nodes_to_remove)
+
+        self.data_load_flag = False
+        data_load_thread.join()

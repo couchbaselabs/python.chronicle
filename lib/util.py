@@ -75,6 +75,17 @@ class Util(object):
             self.log.error("removing nodes {0} failed", str(nodes_to_remove))
         return bool_val, content, response
 
+    def wipe_node(self, node_to_wipe):
+        self.log.info("wiping node: {0}".format(node_to_wipe))
+        api = "http://" + node_to_wipe + "/node/wipe/"
+        headers = {"Content-Type": "application/json"}
+        with requests.Session() as session:
+            bool_val, content, response = self.rest.http_session_post(api, headers=headers, params=node_to_wipe,
+                                                                      session=session)
+        if not bool_val:
+            self.log.error("wiping node {0} failed", str(node_to_wipe))
+        return bool_val, content, response
+
     def add_key_value(self, node, key, value):
         api = "http://" + node + "/kv/" + str(key)
         headers = {"Content-Type": "application/json"}
@@ -155,4 +166,3 @@ class Util(object):
         exit_status = ssh_stdout.channel.recv_exit_status()
         if not (exit_status == 0):
             self.log.error("failed to kill node")
-
