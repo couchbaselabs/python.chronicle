@@ -61,7 +61,7 @@ class Util(object):
             bool_val, content, response = self.rest.http_session_post(api, headers=headers, params=nodes_to_add,
                                                                       session=session)
         if not bool_val:
-            self.log.error("adding nodes {0} failed", str(nodes_to_add))
+            self.log.error("adding nodes {0} failed".format(nodes_to_add))
         return bool_val, content, response
 
     def remove_node(self, primary_node, nodes_to_remove):
@@ -72,7 +72,7 @@ class Util(object):
             bool_val, content, response = self.rest.http_session_post(api, headers=headers, params=nodes_to_remove,
                                                                       session=session)
         if not bool_val:
-            self.log.error("removing nodes {0} failed", str(nodes_to_remove))
+            self.log.error("removing nodes {0} failed".format(nodes_to_remove))
         return bool_val, content, response
 
     def wipe_node(self, node_to_wipe):
@@ -83,7 +83,7 @@ class Util(object):
             bool_val, content, response = self.rest.http_session_post(api, headers=headers, params=node_to_wipe,
                                                                       session=session)
         if not bool_val:
-            self.log.error("wiping node {0} failed", str(node_to_wipe))
+            self.log.error("wiping node {0} failed".format(node_to_wipe))
         return bool_val, content, response
 
     def add_key_value(self, node, key, value):
