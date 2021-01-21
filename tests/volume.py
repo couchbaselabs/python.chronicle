@@ -11,7 +11,7 @@ class Volume(BaseTestCase):
         self.primary_node = self.input["node"]
         self.util = Util(self.primary_node)
         self.data_load_flag = False
-        self.number_of_cycles = 100  # ToDO: scale it up later
+        self.number_of_cycles = 300  # ToDO: scale it up later
         self.number_of_kv_pairs = 100000  # ToDO: scale it up later
 
     def tearDown(self):
@@ -71,7 +71,7 @@ class Volume(BaseTestCase):
         """
         Step 0: create a 1 node cluster
         Step 0.1: Start infinite data load
-        Repeat for 100 cycles below steps:
+        Repeat for 300 cycles below steps:
         Step 1: Add one node
         Step 2: Remove one node
         Step 3: Add multiple nodes
