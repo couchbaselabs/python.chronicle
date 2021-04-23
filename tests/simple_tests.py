@@ -237,36 +237,3 @@ class SimpleTests(BaseTestCase):
             values.append(str(content))
         self.log.info(values)
         self.assertEqual(values_added, values)
-
-    def test_leader_reads_after_removing_leader(self):
-        """
-        Create a 3 node cluster. Add a series of key value pairs.
-        Remove the primary node. Verify leader reads against those keys.
-        """
-        bool_val, content, response = self.util.provision_node(self.primary_node + ":8080")
-        nodes_to_add = '["chronicle_1@127.0.0.1", "chronicle_2@127.0.0.1", ' \
-                       '"chronicle_3@127.0.0.1", "chronicle_4@127.0.0.1"]'
-        bool_val, content, response = self.util.add_node(self.primary_node + ":8080",
-                                                         nodes_to_add=nodes_to_add)
-        base_key = "key"
-        base_val = ""
-        values_added = list()
-        for i in range(5):
-            key = base_key + str(i)
-            value = base_val + str(i)
-            key = str(key)
-            value = str(value)
-            bool_val, content, response = self.util.add_key_value(self.primary_node + ":8080",
-                                                                  key=key, value=value)
-            values_added.append(value)
-
-        nodes_to_remove = '"chronicle_0@127.0.0.1"'
-        bool_val, content, response = self.util.remove_node(self.primary_node + ":8080",
-                                                            nodes_to_remove=nodes_to_remove)
-        values = list()
-        for i in range(5):
-            key = base_key + str(i)
-            content = self.util.get_value(self.primary_node + ":8081", key=key, consistency_level="leader")
-            values.append(str(content))
-        self.log.info(values)
-        self.assertEqual(values_added, values)
